@@ -24,7 +24,9 @@ A comprehensive Flutter application for converting between metric and imperial u
 ## Run the app:
 
 git clone the repo and then run:
+
 flutter pub get
+
 flutter run
 
 ## Screenshot Example:
