@@ -1,5 +1,5 @@
 # MSCS-533-Multiplatform-App-Development
 
-## Flutter Unit Converter App
+## Flutter Unit Converter App (unit_converter)
 
 A comprehensive Flutter application for converting between metric and imperial units across multiple measurement categories.

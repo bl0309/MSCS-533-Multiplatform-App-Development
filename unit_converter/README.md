@@ -21,6 +21,12 @@ A comprehensive Flutter application for converting between metric and imperial u
 - Clean, intuitive Material Design UI  
 - Responsive layout for different screen sizes  
 
+## Run the app:
+
+git clone the repo and then run:
+flutter pub get
+flutter run
+
 ## Screenshot Example:
 [Click to see Screenshot](Screenshot_Example.png)
 
