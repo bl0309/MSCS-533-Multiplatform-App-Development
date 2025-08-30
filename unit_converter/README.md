@@ -51,10 +51,6 @@ A comprehensive Flutter application for converting between metric and imperial u
 - **Temperature**: Accurate formulas for F/C/K conversion  
 - **Volume**: US customary units to metric  
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Acknowledgments
 
 - Flutter team for the amazing framework  
