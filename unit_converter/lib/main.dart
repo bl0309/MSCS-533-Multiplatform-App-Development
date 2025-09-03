@@ -1,106 +1,83 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const ConversionApp());
+  runApp(const MeasuresConverterApp());
 }
 
 /// Main application widget that sets up the MaterialApp
-class ConversionApp extends StatelessWidget {
-  const ConversionApp({super.key});
+class MeasuresConverterApp extends StatelessWidget {
+  const MeasuresConverterApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Unit Converter',
+      title: 'Measures Converter',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          elevation: 4,
-        ),
+        useMaterial3: false, // Using Material 2 for exact match
+        scaffoldBackgroundColor: Colors.grey[100],
       ),
-      home: const ConversionScreen(),
+      home: const MeasuresConverterScreen(),
     );
   }
 }
 
 /// Main screen widget containing the conversion interface
-class ConversionScreen extends StatefulWidget {
-  const ConversionScreen({super.key});
+class MeasuresConverterScreen extends StatefulWidget {
+  const MeasuresConverterScreen({super.key});
 
   @override
-  State<ConversionScreen> createState() => _ConversionScreenState();
+  State<MeasuresConverterScreen> createState() => _MeasuresConverterScreenState();
 }
 
-class _ConversionScreenState extends State<ConversionScreen> {
-  // Controllers for input text fields
-  final TextEditingController _inputController = TextEditingController();
+class _MeasuresConverterScreenState extends State<MeasuresConverterScreen> {
+  // Controllers for input text field
+  final TextEditingController _valueController = TextEditingController();
   
-  // Current conversion type and units
-  String _selectedConversionType = 'Distance';
-  String _fromUnit = 'Miles';
-  String _toUnit = 'Kilometers';
+  // Current conversion units
+  String _fromUnit = 'meters';
+  String _toUnit = 'feet';
   
   // Result of the conversion
   String _result = '';
   
-  // Available conversion types and their units
-  final Map<String, Map<String, List<String>>> _conversionTypes = {
-    'Distance': {
-      'Imperial': ['Miles', 'Yards', 'Feet', 'Inches'],
-      'Metric': ['Kilometers', 'Meters', 'Centimeters', 'Millimeters'],
-    },
-    'Weight': {
-      'Imperial': ['Pounds', 'Ounces', 'Stones'],
-      'Metric': ['Kilograms', 'Grams', 'Milligrams'],
-    },
-    'Temperature': {
-      'Imperial': ['Fahrenheit'],
-      'Metric': ['Celsius', 'Kelvin'],
-    },
-    'Volume': {
-      'Imperial': ['Gallons', 'Quarts', 'Pints', 'Fluid Ounces'],
-      'Metric': ['Liters', 'Milliliters'],
-    },
-  };
+  // Available units for conversion
+  final List<String> _availableUnits = [
+    // Distance units
+    'meters', 'feet', 'inches', 'yards', 'kilometers', 'miles', 'centimeters', 'millimeters',
+    // Weight units  
+    'kilograms', 'pounds', 'ounces', 'grams', 'stones', 'milligrams',
+    // Temperature units
+    'celsius', 'fahrenheit', 'kelvin',
+    // Volume units
+    'liters', 'gallons', 'quarts', 'pints', 'fluid ounces', 'milliliters',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _inputController.addListener(_performConversion);
+    // Set initial value
+    _valueController.text = '0';
+    _performConversion();
   }
 
   @override
   void dispose() {
-    _inputController.dispose();
+    _valueController.dispose();
     super.dispose();
-  }
-
-  /// Get all available units for the selected conversion type
-  List<String> _getAllUnits() {
-    final typeData = _conversionTypes[_selectedConversionType];
-    if (typeData == null) return [];
-    
-    List<String> allUnits = [];
-    typeData.forEach((system, units) {
-      allUnits.addAll(units);
-    });
-    return allUnits;
   }
 
   /// Perform the actual conversion calculation
   void _performConversion() {
-    if (_inputController.text.isEmpty) {
+    if (_valueController.text.isEmpty) {
       setState(() {
         _result = '';
       });
       return;
     }
 
-    final double? inputValue = double.tryParse(_inputController.text);
+    final double? inputValue = double.tryParse(_valueController.text);
     if (inputValue == null) {
       setState(() {
         _result = 'Invalid input';
@@ -108,25 +85,27 @@ class _ConversionScreenState extends State<ConversionScreen> {
       return;
     }
 
-    double convertedValue;
-    
-    try {
-      convertedValue = _convertValue(inputValue, _fromUnit, _toUnit);
+    if (_fromUnit == _toUnit) {
       setState(() {
-        _result = convertedValue.toStringAsFixed(4);
+        _result = '$inputValue $_fromUnit are $inputValue $_toUnit';
+      });
+      return;
+    }
+
+    try {
+      double convertedValue = _convertValue(inputValue, _fromUnit, _toUnit);
+      setState(() {
+        _result = '${_valueController.text} $_fromUnit are ${convertedValue.toStringAsFixed(3)} $_toUnit';
       });
     } catch (e) {
       setState(() {
-        _result = 'Conversion error';
+        _result = 'Conversion not supported';
       });
     }
   }
 
   /// Convert value from one unit to another
   double _convertValue(double value, String fromUnit, String toUnit) {
-    // If same units, return original value
-    if (fromUnit == toUnit) return value;
-
     // Convert to base unit first, then to target unit
     double baseValue = _convertToBase(value, fromUnit);
     return _convertFromBase(baseValue, toUnit);
@@ -134,59 +113,59 @@ class _ConversionScreenState extends State<ConversionScreen> {
 
   /// Convert from any unit to the base unit of its category
   double _convertToBase(double value, String unit) {
-    switch (unit) {
+    switch (unit.toLowerCase()) {
       // Distance conversions to meters
-      case 'Miles':
-        return value * 1609.34;
-      case 'Yards':
-        return value * 0.9144;
-      case 'Feet':
-        return value * 0.3048;
-      case 'Inches':
-        return value * 0.0254;
-      case 'Kilometers':
-        return value * 1000;
-      case 'Meters':
+      case 'meters':
         return value;
-      case 'Centimeters':
+      case 'feet':
+        return value * 0.3048;
+      case 'inches':
+        return value * 0.0254;
+      case 'yards':
+        return value * 0.9144;
+      case 'kilometers':
+        return value * 1000;
+      case 'miles':
+        return value * 1609.34;
+      case 'centimeters':
         return value * 0.01;
-      case 'Millimeters':
+      case 'millimeters':
         return value * 0.001;
       
       // Weight conversions to grams
-      case 'Pounds':
-        return value * 453.592;
-      case 'Ounces':
-        return value * 28.3495;
-      case 'Stones':
-        return value * 6350.29;
-      case 'Kilograms':
-        return value * 1000;
-      case 'Grams':
+      case 'grams':
         return value;
-      case 'Milligrams':
+      case 'kilograms':
+        return value * 1000;
+      case 'pounds':
+        return value * 453.592;
+      case 'ounces':
+        return value * 28.3495;
+      case 'stones':
+        return value * 6350.29;
+      case 'milligrams':
         return value * 0.001;
       
-      // Temperature conversions to Celsius
-      case 'Fahrenheit':
-        return (value - 32) * 5 / 9;
-      case 'Celsius':
+      // Temperature conversions to celsius
+      case 'celsius':
         return value;
-      case 'Kelvin':
+      case 'fahrenheit':
+        return (value - 32) * 5 / 9;
+      case 'kelvin':
         return value - 273.15;
       
       // Volume conversions to liters
-      case 'Gallons':
-        return value * 3.78541;
-      case 'Quarts':
-        return value * 0.946353;
-      case 'Pints':
-        return value * 0.473176;
-      case 'Fluid Ounces':
-        return value * 0.0295735;
-      case 'Liters':
+      case 'liters':
         return value;
-      case 'Milliliters':
+      case 'gallons':
+        return value * 3.78541;
+      case 'quarts':
+        return value * 0.946353;
+      case 'pints':
+        return value * 0.473176;
+      case 'fluid ounces':
+        return value * 0.0295735;
+      case 'milliliters':
         return value * 0.001;
       
       default:
@@ -196,79 +175,63 @@ class _ConversionScreenState extends State<ConversionScreen> {
 
   /// Convert from base unit to target unit
   double _convertFromBase(double baseValue, String unit) {
-    switch (unit) {
+    switch (unit.toLowerCase()) {
       // Distance conversions from meters
-      case 'Miles':
-        return baseValue / 1609.34;
-      case 'Yards':
-        return baseValue / 0.9144;
-      case 'Feet':
-        return baseValue / 0.3048;
-      case 'Inches':
-        return baseValue / 0.0254;
-      case 'Kilometers':
-        return baseValue / 1000;
-      case 'Meters':
+      case 'meters':
         return baseValue;
-      case 'Centimeters':
+      case 'feet':
+        return baseValue / 0.3048;
+      case 'inches':
+        return baseValue / 0.0254;
+      case 'yards':
+        return baseValue / 0.9144;
+      case 'kilometers':
+        return baseValue / 1000;
+      case 'miles':
+        return baseValue / 1609.34;
+      case 'centimeters':
         return baseValue / 0.01;
-      case 'Millimeters':
+      case 'millimeters':
         return baseValue / 0.001;
       
       // Weight conversions from grams
-      case 'Pounds':
-        return baseValue / 453.592;
-      case 'Ounces':
-        return baseValue / 28.3495;
-      case 'Stones':
-        return baseValue / 6350.29;
-      case 'Kilograms':
-        return baseValue / 1000;
-      case 'Grams':
+      case 'grams':
         return baseValue;
-      case 'Milligrams':
+      case 'kilograms':
+        return baseValue / 1000;
+      case 'pounds':
+        return baseValue / 453.592;
+      case 'ounces':
+        return baseValue / 28.3495;
+      case 'stones':
+        return baseValue / 6350.29;
+      case 'milligrams':
         return baseValue / 0.001;
       
-      // Temperature conversions from Celsius
-      case 'Fahrenheit':
-        return (baseValue * 9 / 5) + 32;
-      case 'Celsius':
+      // Temperature conversions from celsius
+      case 'celsius':
         return baseValue;
-      case 'Kelvin':
+      case 'fahrenheit':
+        return (baseValue * 9 / 5) + 32;
+      case 'kelvin':
         return baseValue + 273.15;
       
       // Volume conversions from liters
-      case 'Gallons':
-        return baseValue / 3.78541;
-      case 'Quarts':
-        return baseValue / 0.946353;
-      case 'Pints':
-        return baseValue / 0.473176;
-      case 'Fluid Ounces':
-        return baseValue / 0.0295735;
-      case 'Liters':
+      case 'liters':
         return baseValue;
-      case 'Milliliters':
+      case 'gallons':
+        return baseValue / 3.78541;
+      case 'quarts':
+        return baseValue / 0.946353;
+      case 'pints':
+        return baseValue / 0.473176;
+      case 'fluid ounces':
+        return baseValue / 0.0295735;
+      case 'milliliters':
         return baseValue / 0.001;
       
       default:
         throw ArgumentError('Unknown unit: $unit');
-    }
-  }
-
-  /// Handle conversion type change
-  void _onConversionTypeChanged(String? newType) {
-    if (newType != null && newType != _selectedConversionType) {
-      setState(() {
-        _selectedConversionType = newType;
-        // Reset units to first available ones
-        final allUnits = _getAllUnits();
-        if (allUnits.isNotEmpty) {
-          _fromUnit = allUnits.first;
-          _toUnit = allUnits.length > 1 ? allUnits[1] : allUnits.first;
-        }
-      });
-      _performConversion();
     }
   }
 
@@ -278,7 +241,7 @@ class _ConversionScreenState extends State<ConversionScreen> {
       setState(() {
         _fromUnit = newUnit;
       });
-      _performConversion();
+      // Don't auto-convert when unit changes
     }
   }
 
@@ -288,25 +251,12 @@ class _ConversionScreenState extends State<ConversionScreen> {
       setState(() {
         _toUnit = newUnit;
       });
-      _performConversion();
+      // Don't auto-convert when unit changes
     }
   }
 
-  /// Clear all inputs and results
-  void _clearAll() {
-    setState(() {
-      _inputController.clear();
-      _result = '';
-    });
-  }
-
-  /// Swap from and to units
-  void _swapUnits() {
-    setState(() {
-      String temp = _fromUnit;
-      _fromUnit = _toUnit;
-      _toUnit = temp;
-    });
+  /// Convert button pressed
+  void _onConvertPressed() {
     _performConversion();
   }
 
@@ -314,246 +264,202 @@ class _ConversionScreenState extends State<ConversionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Measures Converter'),
+        title: const Text(
+          'Measures Converter',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        backgroundColor: const Color(0xFF2196F3), // Blue color matching screenshot
         centerTitle: true,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: Colors.grey[100],
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Conversion Type Selector
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Conversion Type',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      value: _selectedConversionType,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                      items: _conversionTypes.keys.map((String type) {
-                        return DropdownMenuItem<String>(
-                          value: type,
-                          child: Text(type),
-                        );
-                      }).toList(),
-                      onChanged: _onConversionTypeChanged,
-                    ),
-                  ],
+            // Value Section
+            const Text(
+              'Value',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _valueController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(
+                fontSize: 24,
+                color: Color(0xFF2196F3),
+                fontWeight: FontWeight.w500,
+              ),
+              decoration: const InputDecoration(
+                border: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Color(0xFF2196F3),
+                    width: 2.0,
+                  ),
+                ),
+                enabledBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Color(0xFF2196F3),
+                    width: 2.0,
+                  ),
+                ),
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Color(0xFF2196F3),
+                    width: 2.0,
+                  ),
+                ),
+                contentPadding: EdgeInsets.symmetric(vertical: 8.0),
+              ),
+              onChanged: (value) => _performConversion(),
+            ),
+            
+            const SizedBox(height: 40),
+            
+            // From Section
+            const Text(
+              'From',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Color(0xFF2196F3),
+                    width: 2.0,
+                  ),
+                ),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _fromUnit,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Color(0xFF2196F3),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFF2196F3),
+                    size: 28,
+                  ),
+                  isExpanded: true,
+                  items: _availableUnits.map((String unit) {
+                    return DropdownMenuItem<String>(
+                      value: unit,
+                      child: Text(unit),
+                    );
+                  }).toList(),
+                  onChanged: _onFromUnitChanged,
                 ),
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 40),
             
-            // Input Section
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Enter Value',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _inputController,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                      ),
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Enter a number',
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                      ),
-                    ),
-                  ],
+            // To Section
+            const Text(
+              'To',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Color(0xFF2196F3),
+                    width: 2.0,
+                  ),
+                ),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _toUnit,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    color: Color(0xFF2196F3),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down,
+                    color: Color(0xFF2196F3),
+                    size: 28,
+                  ),
+                  isExpanded: true,
+                  items: _availableUnits.map((String unit) {
+                    return DropdownMenuItem<String>(
+                      value: unit,
+                      child: Text(unit),
+                    );
+                  }).toList(),
+                  onChanged: _onToUnitChanged,
                 ),
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 40),
             
-            // Unit Selection Section
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Unit Conversion',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: _swapUnits,
-                          icon: const Icon(Icons.swap_horiz),
-                          tooltip: 'Swap units',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // From Unit
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('From:', style: TextStyle(fontSize: 16)),
-                        const SizedBox(height: 4),
-                        DropdownButtonFormField<String>(
-                          value: _fromUnit,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                          ),
-                          items: _getAllUnits().map((String unit) {
-                            return DropdownMenuItem<String>(
-                              value: unit,
-                              child: Text(unit),
-                            );
-                          }).toList(),
-                          onChanged: _onFromUnitChanged,
-                        ),
-                      ],
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // To Unit
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('To:', style: TextStyle(fontSize: 16)),
-                        const SizedBox(height: 4),
-                        DropdownButtonFormField<String>(
-                          value: _toUnit,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                          ),
-                          items: _getAllUnits().map((String unit) {
-                            return DropdownMenuItem<String>(
-                              value: unit,
-                              child: Text(unit),
-                            );
-                          }).toList(),
-                          onChanged: _onToUnitChanged,
-                        ),
-                      ],
-                    ),
-                  ],
+            // Convert Button
+            Center(
+              child: ElevatedButton(
+                onPressed: _onConvertPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  foregroundColor: const Color(0xFF2196F3),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Convert',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 40),
             
             // Result Section
-            Card(
-              elevation: 4,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Result',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12.0),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(4.0),
-                        color: Colors.grey[50],
-                      ),
-                      child: Text(
-                        _result.isEmpty ? 'Enter a value to see the result' : '$_result $_toUnit',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: _result.isEmpty ? Colors.grey : Colors.black,
-                          fontWeight: _result.isEmpty ? FontWeight.normal : FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+            if (_result.isNotEmpty)
+              Center(
+                child: Text(
+                  _result,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _clearAll,
-                    icon: const Icon(Icons.clear),
-                    label: const Text('Clear All'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _swapUnits,
-                    icon: const Icon(Icons.swap_horiz),
-                    label: const Text('Swap Units'),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
